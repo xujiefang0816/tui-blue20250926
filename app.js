@@ -20,9 +20,6 @@ function initApp() {
     // 绑定事件处理函数
     bindEventListeners();
     
-    // 初始化日期选择器
-    setupDatePickers();
-    
     // 检查是否有用户已登录
     checkLoginStatus();
 }
@@ -367,55 +364,6 @@ function handleFileTypeChange() {
     }
 }
 
-// 创建隐藏的日期选择器
-function createHiddenDatePicker() {
-    let datePicker = document.getElementById('hidden-date-picker');
-    if (!datePicker) {
-        datePicker = document.createElement('input');
-        datePicker.type = 'month';
-        datePicker.id = 'hidden-date-picker';
-        datePicker.classList.add('hidden');
-        document.body.appendChild(datePicker);
-        
-        // 监听日期选择变化
-        datePicker.addEventListener('change', function() {
-            if (datePicker.dataset.target) {
-                const targetInput = document.getElementById(datePicker.dataset.target);
-                if (targetInput) {
-                    const [year, month] = datePicker.value.split('-');
-                    targetInput.value = `${year}年${month}月`;
-                }
-                // 清除目标引用
-                delete datePicker.dataset.target;
-            }
-        });
-    }
-    return datePicker;
-}
-
-// 处理日期选择按钮点击
-function setupDatePickers() {
-    const datePicker = createHiddenDatePicker();
-    
-    // 单期间选择器
-    document.getElementById('single-period-picker').addEventListener('click', function() {
-        datePicker.dataset.target = 'period-single-value';
-        datePicker.click();
-    });
-    
-    // 开始期间选择器
-    document.getElementById('start-period-picker').addEventListener('click', function() {
-        datePicker.dataset.target = 'period-start';
-        datePicker.click();
-    });
-    
-    // 结束期间选择器
-    document.getElementById('end-period-picker').addEventListener('click', function() {
-        datePicker.dataset.target = 'period-end';
-        datePicker.click();
-    });
-}
-
 // 处理期间类型变化
 function handlePeriodTypeChange() {
     const singlePeriod = document.getElementById('period-single').checked;
@@ -452,15 +400,16 @@ function handleFileRegistration(e) {
         if (document.getElementById('period-single').checked) {
             const periodSingle = document.getElementById('period-single-value').value;
             if (periodSingle) {
-                // 已经是 yyyy年mm月 格式，直接使用
-                periodText = periodSingle;
+                const [year, month] = periodSingle.split('-');
+                periodText = `${year}年${month}月`;
             }
         } else {
             const periodStart = document.getElementById('period-start').value;
             const periodEnd = document.getElementById('period-end').value;
             if (periodStart && periodEnd) {
-                // 已经是 yyyy年mm月 格式，直接组合
-                periodText = `${periodStart}-${periodEnd}`;
+                const [startYear, startMonth] = periodStart.split('-');
+                const [endYear, endMonth] = periodEnd.split('-');
+                periodText = `${startYear}年${startMonth}月-${endYear}年${endMonth}月`;
             }
         }
         
