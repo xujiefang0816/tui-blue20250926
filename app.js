@@ -398,14 +398,35 @@ function handleFileRegistration(e) {
         
         let periodText = '';
         if (document.getElementById('period-single').checked) {
-            const periodSingle = document.getElementById('period-single-value').value;
+            // 如果是单期间，尝试获取值（考虑到HTML中可能有问题，这里做个健壮性处理）
+            let periodSingle = '';
+            try {
+                periodSingle = document.getElementById('period-single-value').value;
+            } catch (e) {
+                // 如果获取失败，尝试其他可能的字段
+                try {
+                    periodSingle = document.getElementById('period-start').value;
+                } catch (e) {
+                    console.warn('无法获取期间值');
+                }
+            }
+            
             if (periodSingle) {
                 const [year, month] = periodSingle.split('-');
                 periodText = `${year}年${month}月`;
             }
         } else {
-            const periodStart = document.getElementById('period-start').value;
-            const periodEnd = document.getElementById('period-end').value;
+            // 期间区间
+            let periodStart = '';
+            let periodEnd = '';
+            
+            try {
+                periodStart = document.getElementById('period-start').value;
+                periodEnd = document.getElementById('period-end').value;
+            } catch (e) {
+                console.warn('无法获取期间区间值');
+            }
+            
             if (periodStart && periodEnd) {
                 const [startYear, startMonth] = periodStart.split('-');
                 const [endYear, endMonth] = periodEnd.split('-');
@@ -415,14 +436,21 @@ function handleFileRegistration(e) {
         
         const paymentUnit = document.getElementById('payment-unit').value;
         
-        // 生成摘要
+        // 生成摘要 - 根据要求的格式
         const parts = [];
         if (summaryType) parts.push(summaryType);
         if (summaryContent) parts.push(summaryContent);
-        if (periodText) parts.push(periodText);
-        if (paymentUnit) parts.push(paymentUnit);
         
-        fileContent = parts.join('-');
+        // 期间和单位简称用--连接，并外加括号
+        const periodUnitPart = [];
+        if (periodText) periodUnitPart.push(periodText);
+        if (paymentUnit) periodUnitPart.push(paymentUnit);
+        
+        if (periodUnitPart.length > 0) {
+            parts.push(`(${periodUnitPart.join('--')})`);
+        }
+        
+        fileContent = parts.join(' ');
     }
     
     // 准备文件数据
