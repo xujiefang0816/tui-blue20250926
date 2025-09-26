@@ -1,0 +1,387 @@
+/* 全局样式重置 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* 基础样式 */
+body {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #F2F3F5;
+    color: #1D2129;
+    line-height: 1.6;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #F2F3F5;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #C9CDD4;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #86909C;
+}
+
+/* 按钮基础样式 */
+button {
+    cursor: pointer;
+    border: none;
+    outline: none;
+    font-family: inherit;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* 输入框基础样式 */
+input,
+select,
+textarea {
+    font-family: inherit;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: #165DFF !important;
+    box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.1) !important;
+}
+
+/* 卡片样式 */
+.card {
+    background-color: #FFFFFF;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 24px;
+    transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* 表格样式 */
+.table-container {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th {
+    background-color: #F7F8FA;
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #4E5969;
+    border-bottom: 1px solid #E5E6EB;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.table td {
+    padding: 12px;
+    border-bottom: 1px solid #F2F3F5;
+    transition: background-color 0.2s ease;
+}
+
+.table tr:hover td {
+    background-color: #FAFBFF;
+}
+
+/* 表单分组样式 */
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: #4E5969;
+}
+
+/* 加载动画 */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #165DFF;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 通知动画 */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+.notification-show {
+    animation: slideInRight 0.3s ease-out forwards;
+}
+
+.notification-hide {
+    animation: slideOutRight 0.3s ease-in forwards;
+}
+
+/* 按钮动画 */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background-color: #165DFF;
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: #0E42D2;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(22, 93, 255, 0.3);
+}
+
+.btn-secondary {
+    background-color: #F2F3F5;
+    color: #4E5969;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background-color: #E5E6EB;
+}
+
+.btn-success {
+    background-color: #00B42A;
+    color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+    background-color: #008722;
+}
+
+.btn-danger {
+    background-color: #F53F3F;
+    color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background-color: #D92121;
+}
+
+.btn-warning {
+    background-color: #FF7D00;
+    color: white;
+}
+
+.btn-warning:hover:not(:disabled) {
+    background-color: #E56C00;
+}
+
+/* 徽章样式 */
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.badge-primary {
+    background-color: #E8F3FF;
+    color: #165DFF;
+}
+
+.badge-success {
+    background-color: #E6F7EF;
+    color: #00B42A;
+}
+
+.badge-warning {
+    background-color: #FFF2E8;
+    color: #FF7D00;
+}
+
+.badge-danger {
+    background-color: #FFF1F0;
+    color: #F53F3F;
+}
+
+.badge-gray {
+    background-color: #F2F3F5;
+    color: #86909C;
+}
+
+/* 分页样式 */
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 24px;
+}
+
+.pagination button {
+    margin: 0 4px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: 1px solid #E5E6EB;
+    background-color: white;
+    color: #4E5969;
+    transition: all 0.2s ease;
+}
+
+.pagination button:hover:not(:disabled) {
+    border-color: #165DFF;
+    color: #165DFF;
+}
+
+.pagination button.active {
+    background-color: #165DFF;
+    border-color: #165DFF;
+    color: white;
+}
+
+/* 标签页样式 */
+.tabs {
+    display: flex;
+    border-bottom: 1px solid #E5E6EB;
+    margin-bottom: 20px;
+}
+
+.tab {
+    padding: 12px 24px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    color: #86909C;
+}
+
+.tab.active {
+    color: #165DFF;
+    border-bottom-color: #165DFF;
+}
+
+.tab:hover:not(.active) {
+    color: #4E5969;
+}
+
+/* 筛选器样式 */
+.filter-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 16px;
+    background-color: #F7F8FA;
+    border-radius: 8px;
+}
+
+.filter-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 动画效果 */
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .card {
+        padding: 16px;
+    }
+    
+    .btn {
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+    
+    .table th,
+    .table td {
+        padding: 8px;
+        font-size: 14px;
+    }
+    
+    .filter-container {
+        flex-direction: column;
+    }
+    
+    .filter-item {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .table-container {
+        font-size: 12px;
+    }
+    
+    .tabs {
+        overflow-x: auto;
+    }
+    
+    .tab {
+        white-space: nowrap;
+        padding: 10px 16px;
+    }
+}
