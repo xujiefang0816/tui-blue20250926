@@ -20,6 +20,9 @@ function initApp() {
     // 绑定事件处理函数
     bindEventListeners();
     
+    // 初始化日期选择器
+    setupDatePickers();
+    
     // 检查是否有用户已登录
     checkLoginStatus();
 }
@@ -111,11 +114,6 @@ function bindEventListeners() {
     document.getElementById('file-type').addEventListener('change', handleFileTypeChange);
     document.getElementById('period-single').addEventListener('change', handlePeriodTypeChange);
     document.getElementById('period-range').addEventListener('change', handlePeriodTypeChange);
-    
-    // 摘要相关字段的事件监听
-    document.getElementById('summary-type').addEventListener('change', updateSummary);
-    document.getElementById('summary-content').addEventListener('input', updateSummary);
-    document.getElementById('payment-unit').addEventListener('input', updateSummary);
     
     // 文件信息页面
     document.getElementById('refresh-file-info').addEventListener('click', loadFileInfoList);
@@ -362,136 +360,60 @@ function handleFileTypeChange() {
         summarySection.classList.remove('hidden');
         fileContent.placeholder = '摘要将自动生成到此处';
         fileContent.disabled = true;
-        
-        // 启用期间显示功能
-        enablePeriodDisplay();
     } else {
         summarySection.classList.add('hidden');
         fileContent.placeholder = '请输入文件内容';
         fileContent.disabled = false;
+    }
+}
+
+// 创建隐藏的日期选择器
+function createHiddenDatePicker() {
+    let datePicker = document.getElementById('hidden-date-picker');
+    if (!datePicker) {
+        datePicker = document.createElement('input');
+        datePicker.type = 'month';
+        datePicker.id = 'hidden-date-picker';
+        datePicker.classList.add('hidden');
+        document.body.appendChild(datePicker);
         
-        // 禁用期间显示功能
-        disablePeriodDisplay();
-    }
-    
-    // 自动生成摘要
-    updateSummary();
-}
-
-// 启用期间显示功能
-function enablePeriodDisplay() {
-    const periodInputs = document.querySelectorAll('.period-input');
-    const periodDisplays = document.querySelectorAll('.period-display');
-    
-    // 为期间输入框添加只读属性，限制为月份选择
-    periodInputs.forEach(input => {
-        input.readOnly = true;
-        // 设置事件监听，更新显示
-        input.addEventListener('change', updatePeriodDisplay);
-    });
-    
-    // 显示期间显示元素
-    periodDisplays.forEach(display => {
-        display.style.opacity = '1';
-        display.style.pointerEvents = 'none';
-    });
-}
-
-// 禁用期间显示功能
-function disablePeriodDisplay() {
-    const periodInputs = document.querySelectorAll('.period-input');
-    const periodDisplays = document.querySelectorAll('.period-display');
-    
-    // 移除期间输入框的只读属性
-    periodInputs.forEach(input => {
-        input.readOnly = false;
-        // 移除事件监听
-        input.removeEventListener('change', updatePeriodDisplay);
-    });
-    
-    // 隐藏期间显示元素
-    periodDisplays.forEach(display => {
-        display.style.opacity = '0';
-        display.style.pointerEvents = 'none';
-    });
-}
-
-// 更新期间显示
-function updatePeriodDisplay() {
-    // 更新单期间显示
-    const periodSingleValue = document.getElementById('period-single-value').value;
-    const periodSingleDisplay = document.getElementById('period-single-display');
-    
-    if (periodSingleValue) {
-        const [year, month] = periodSingleValue.split('-');
-        periodSingleDisplay.textContent = `${year}年${month}月`;
-    } else {
-        periodSingleDisplay.textContent = '';
-    }
-    
-    // 更新开始期间显示
-    const periodStartValue = document.getElementById('period-start').value;
-    const periodStartDisplay = document.getElementById('period-start-display');
-    
-    if (periodStartValue) {
-        const [year, month] = periodStartValue.split('-');
-        periodStartDisplay.textContent = `${year}年${month}月`;
-    } else {
-        periodStartDisplay.textContent = '';
-    }
-    
-    // 更新结束期间显示
-    const periodEndValue = document.getElementById('period-end').value;
-    const periodEndDisplay = document.getElementById('period-end-display');
-    
-    if (periodEndValue) {
-        const [year, month] = periodEndValue.split('-');
-        periodEndDisplay.textContent = `${year}年${month}月`;
-    } else {
-        periodEndDisplay.textContent = '';
-    }
-    
-    // 自动更新摘要
-    updateSummary();
-}
-
-// 更新摘要
-function updateSummary() {
-    const fileType = document.getElementById('file-type').value;
-    const fileContent = document.getElementById('file-content');
-    
-    if (fileType === '付款申请单' || fileType === '付款单+用印审批（仅限验收报告）') {
-        const summaryType = document.getElementById('summary-type').value;
-        const summaryContent = document.getElementById('summary-content').value;
-        
-        let periodText = '';
-        if (document.getElementById('period-single').checked) {
-            const periodSingle = document.getElementById('period-single-value').value;
-            if (periodSingle) {
-                const [year, month] = periodSingle.split('-');
-                periodText = `${year}年${month}月`;
+        // 监听日期选择变化
+        datePicker.addEventListener('change', function() {
+            if (datePicker.dataset.target) {
+                const targetInput = document.getElementById(datePicker.dataset.target);
+                if (targetInput) {
+                    const [year, month] = datePicker.value.split('-');
+                    targetInput.value = `${year}年${month}月`;
+                }
+                // 清除目标引用
+                delete datePicker.dataset.target;
             }
-        } else {
-            const periodStart = document.getElementById('period-start').value;
-            const periodEnd = document.getElementById('period-end').value;
-            if (periodStart && periodEnd) {
-                const [startYear, startMonth] = periodStart.split('-');
-                const [endYear, endMonth] = periodEnd.split('-');
-                periodText = `${startYear}年${startMonth}月-${endYear}年${endMonth}月`;
-            }
-        }
-        
-        const paymentUnit = document.getElementById('payment-unit').value;
-        
-        // 生成摘要
-        const parts = [];
-        if (summaryType) parts.push(summaryType);
-        if (summaryContent) parts.push(summaryContent);
-        if (periodText) parts.push(periodText);
-        if (paymentUnit) parts.push(paymentUnit);
-        
-        fileContent.value = parts.join('-');
+        });
     }
+    return datePicker;
+}
+
+// 处理日期选择按钮点击
+function setupDatePickers() {
+    const datePicker = createHiddenDatePicker();
+    
+    // 单期间选择器
+    document.getElementById('single-period-picker').addEventListener('click', function() {
+        datePicker.dataset.target = 'period-single-value';
+        datePicker.click();
+    });
+    
+    // 开始期间选择器
+    document.getElementById('start-period-picker').addEventListener('click', function() {
+        datePicker.dataset.target = 'period-start';
+        datePicker.click();
+    });
+    
+    // 结束期间选择器
+    document.getElementById('end-period-picker').addEventListener('click', function() {
+        datePicker.dataset.target = 'period-end';
+        datePicker.click();
+    });
 }
 
 // 处理期间类型变化
@@ -530,16 +452,15 @@ function handleFileRegistration(e) {
         if (document.getElementById('period-single').checked) {
             const periodSingle = document.getElementById('period-single-value').value;
             if (periodSingle) {
-                const [year, month] = periodSingle.split('-');
-                periodText = `${year}年${month}月`;
+                // 已经是 yyyy年mm月 格式，直接使用
+                periodText = periodSingle;
             }
         } else {
             const periodStart = document.getElementById('period-start').value;
             const periodEnd = document.getElementById('period-end').value;
             if (periodStart && periodEnd) {
-                const [startYear, startMonth] = periodStart.split('-');
-                const [endYear, endMonth] = periodEnd.split('-');
-                periodText = `${startYear}年${startMonth}月-${endYear}年${endMonth}月`;
+                // 已经是 yyyy年mm月 格式，直接组合
+                periodText = `${periodStart}-${periodEnd}`;
             }
         }
         
