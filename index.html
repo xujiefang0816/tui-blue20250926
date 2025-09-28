@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在线文件信息登记系统</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <!-- 配置Tailwind CSS -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#4080FF',
+                        success: '#00B42A',
+                        warning: '#FF7D00',
+                        danger: '#F53F3F',
+                        info: '#86909C',
+                        light: '#F2F3F5',
+                        dark: '#1D2129',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .transition-all-300 {
+                transition: all 0.3s ease;
+            }
+            .shadow-custom {
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            }
+        }
+    </style>
+    <style>
+        body {
+            background-color: #F7F8FA;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+        /* 动画效果 */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- 登录页面 -->
+    <div id="login-page" class="fixed inset-0 flex items-center justify-center bg-white z-50">
+        <div class="w-full max-w-md p-8 bg-white rounded-lg shadow-custom">
+            <div class="text-center mb-8">
+                <h1 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-dark">在线文件信息登记系统</h1>
+                <p class="text-info mt-2">请输入账号和密码登录</p>
+            </div>
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-dark mb-1">账号</label>
+                    <input type="text" id="username" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300" placeholder="请输入账号" required>
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-dark mb-1">密码</label>
+                    <input type="password" id="password" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300" placeholder="请输入密码" required>
+                </div>
+                <div class="flex items-center justify-between">
+                    <button type="button" id="change-password-btn" class="text-sm text-primary hover:text-secondary transition-all-300">修改密码</button>
+                </div>
+                <button type="submit" class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-md transition-all-300 flex items-center justify-center gap-2">
+                    <i class="fa fa-sign-in"></i> 登录
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 修改密码弹窗 -->
+    <div id="change-password-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="w-full max-w-md p-6 bg-white rounded-lg shadow-custom">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-semibold text-dark">修改密码</h2>
+                <button id="close-modal-btn" class="text-info hover:text-dark transition-all-300">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <form id="change-password-form" class="space-y-4">
+                <div>
+                    <label for="current-password" class="block text-sm font-medium text-dark mb-1">当前密码</label>
+                    <input type="password" id="current-password" class="w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="请输入当前密码" required>
+                </div>
+                <div>
+                    <label for="new-password" class="block text-sm font-medium text-dark mb-1">新密码</label>
+                    <input type="password" id="new-password" class="w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="请输入新密码" required>
+                </div>
+                <div>
+                    <label for="confirm-password" class="block text-sm font-medium text-dark mb-1">确认新密码</label>
+                    <input type="password" id="confirm-password" class="w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="请再次输入新密码" required>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" id="cancel-change-btn" class="px-4 py-2 border border-gray-300 rounded-md text-dark hover:bg-gray-50 transition-all-300">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-all-300">确认修改</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 主应用容器 -->
+    <div id="app-container" class="flex flex-col min-h-screen hidden">
+        <!-- 顶部导航栏 -->
+        <header class="bg-white shadow-custom z-10">
+            <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <h1 class="text-lg font-bold text-dark">在线文件信息登记系统</h1>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div id="user-info" class="text-sm text-info hidden">
+                        <span id="current-user"></span> - <span id="user-role"></span>
+                    </div>
+                    <button id="logout-btn" class="text-sm text-primary hover:text-secondary transition-all-300 hidden">
+                        <i class="fa fa-sign-out mr-1"></i> 退出登录
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主体内容 -->
+        <main class="flex-1 container mx-auto px-4 py-6">
+            <!-- 侧边菜单和内容区域 -->
+            <div class="flex gap-6">
+                <!-- 侧边菜单 -->
+                <aside id="sidebar" class="w-64 bg-white rounded-lg shadow-custom p-4 h-fit hidden lg:block">
+                    <nav class="space-y-1">
+                        <a href="#" class="nav-item block py-2 px-3 rounded-md text-sm font-medium text-dark hover:bg-primary/5 hover:text-primary transition-all-300 flex items-center gap-2" data-page="file-register">
+                            <i class="fa fa-file-text-o"></i> 文件登记
+                        </a>
+                        <a href="#" class="nav-item block py-2 px-3 rounded-md text-sm font-medium text-dark hover:bg-primary/5 hover:text-primary transition-all-300 flex items-center gap-2" data-page="file-info">
+                            <i class="fa fa-list-alt"></i> 文件信息
+                        </a>
+                        <a href="#" class="nav-item block py-2 px-3 rounded-md text-sm font-medium text-dark hover:bg-primary/5 hover:text-primary transition-all-300 flex items-center gap-2" data-page="file-process">
+                            <i class="fa fa-cog"></i> 文件处理
+                        </a>
+                        <a href="#" class="nav-item block py-2 px-3 rounded-md text-sm font-medium text-dark hover:bg-primary/5 hover:text-primary transition-all-300 flex items-center gap-2" data-page="system-settings">
+                            <i class="fa fa-wrench"></i> 系统设置
+                        </a>
+                    </nav>
+                </aside>
+
+                <!-- 移动端菜单按钮 -->
+                <div class="lg:hidden fixed bottom-4 right-4 z-30">
+                    <button id="mobile-menu-btn" class="bg-primary text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center">
+                        <i class="fa fa-bars"></i>
+                    </button>
+                </div>
+
+                <!-- 移动端侧边菜单 -->
+                <div id="mobile-sidebar" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden">
+                    <div class="w-64 h-full bg-white shadow-custom p-4 transform transition-transform duration-300 -translate-x-full">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="font-semibold text-dark">菜单</h2>
+                            <button id="close-mobile-menu-btn" class="text-info hover:text-dark transition-all-300">
+                                <i class="fa fa-times"></i>
+                            </button>
+                        </div>
+                        <nav class="space-y-1">
+                            <a href="#" class="mobile-nav-item block py-2 px-3 rounded-md text-sm font-medium text-dark hover:bg-primary/5 hover:text-primary transition-all-300 flex items-center gap-2" data-page="file-register">
+                                <i class="fa fa-file-text-o"></i> 文件登记
+                            </a>
+                            <a href="#" class="mobile-nav-item block py-2 px-3 rounded-md text-sm font-medium text-dark hover:bg-primary/5 hover:text-primary transition-all-300 flex items-center gap-2" data-page="file-info">
+                                <i class="fa fa-list-alt"></i> 文件信息
+                            </a>
+                            <a href="#" class="mobile-nav-item block py-2 px-3 rounded-md text-sm font-medium text-dark hover:bg-primary/5 hover:text-primary transition-all-300 flex items-center gap-2" data-page="file-process">
+                                <i class="fa fa-cog"></i> 文件处理
+                            </a>
+                            <a href="#" class="mobile-nav-item block py-2 px-3 rounded-md text-sm font-medium text-dark hover:bg-primary/5 hover:text-primary transition-all-300 flex items-center gap-2" data-page="system-settings">
+                                <i class="fa fa-wrench"></i> 系统设置
+                            </a>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- 内容区域 -->
+                <div class="flex-1 bg-white rounded-lg shadow-custom p-6">
+                    <!-- 文件登记页面 -->
+                    <div id="file-register-page" class="page-content">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-bold text-dark">文件登记</h2>
+                        </div>
+                        <form id="file-register-form" class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div>
+                                    <label for="register-date" class="block text-sm font-medium text-dark mb-1">日期 <span class="text-danger">*</span></label>
+                                    <input type="date" id="register-date" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300" required>
+                                </div>
+                                <div>
+                                    <label for="file-type" class="block text-sm font-medium text-dark mb-1">文件类型 <span class="text-danger">*</span></label>
+                                    <select id="file-type" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300" required>
+                                        <option value="">请选择文件类型</option>
+                                    </select>
+                                </div>
+                                <div id="other-file-type-container" class="hidden">
+                                    <label for="other-file-type" class="block text-sm font-medium text-dark mb-1">其他文件类型</label>
+                                    <input type="text" id="other-file-type" class="w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="请输入其他文件类型">
+                                </div>
+                                <div>
+                                    <label for="department" class="block text-sm font-medium text-dark mb-1">部门 <span class="text-danger">*</span></label>
+                                    <select id="department" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300" required>
+                                        <option value="">请选择部门</option>
+                                    </select>
+                                </div>
+                                <div id="other-department-container" class="hidden">
+                                    <label for="other-department" class="block text-sm font-medium text-dark mb-1">其他部门</label>
+                                    <input type="text" id="other-department" class="w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="请输入其他部门">
+                                </div>
+                                <div>
+                                    <label for="applicant" class="block text-sm font-medium text-dark mb-1">申请人 <span class="text-danger">*</span></label>
+                                    <input type="text" id="applicant" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300" placeholder="请输入申请人姓名" required>
+                                </div>
+                            </div>
+
+                            <!-- 文件内容区域 -->
+                            <div id="file-content-container">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-base font-semibold text-dark">文件内容</h3>
+                                </div>
+                                
+                                <!-- 普通文件内容 -->
+                                <div id="normal-content-container">
+                                    <div>
+                                        <label for="file-content" class="block text-sm font-medium text-dark mb-1">文件内容 <span class="text-danger">*</span></label>
+                                        <textarea id="file-content" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300" placeholder="请输入文件内容" required></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- 摘要内容（付款申请单专用） -->
+                                <div id="summary-content-container" class="hidden">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-dark mb-1">支付类型 <span class="text-danger">*</span></label>
+                                            <div class="flex items-center space-x-4">
+                                                <label class="flex items-center">
+                                                    <input type="radio" name="summary-type" value="支付" class="mr-2" checked>
+                                                    <span>支付（单位）</span>
+                                                </label>
+                                                <label class="flex items-center">
+                                                    <input type="radio" name="summary-type" value="报销" class="mr-2">
+                                                    <span>报销（个人）</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label for="payment-item" class="block text-sm font-medium text-dark mb-1">支付项目 <span class="text-danger">*</span></label>
+                                            <input type="text" id="payment-item" class="w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="请输入支付项目" required>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                        <div>
+                                            <label for="payment-category" class="block text-sm font-medium text-dark mb-1">支付类别 <span class="text-danger">*</span></label>
+                                            <select id="payment-category" class="w-full px-4 py-2 border border-gray-300 rounded-md" required>
+                                                <option value="">请选择支付类别</option>
+                                            </select>
+                                        </div>
+                                        <div id="percentage-container" class="hidden">
+                                            <label for="payment-percentage" class="block text-sm font-medium text-dark mb-1">百分比</label>
+                                            <div class="flex items-center space-x-2">
+                                                <input type="number" id="payment-percentage" class="w-full px-4 py-2 border border-gray-300 rounded-md" min="0" max="100" value="100">
+                                                <span>%</span>
+                                            </div>
+                                        </div>
+                                        <div id="other-payment-container" class="hidden">
+                                            <label for="other-payment" class="block text-sm font-medium text-dark mb-1">其他支付类别</label>
+                                            <input type="text" id="other-payment" class="w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="请输入其他支付类别">
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-dark mb-1">期间类型 <span class="text-danger">*</span></label>
+                                            <div class="flex items-center space-x-4">
+                                                <label class="flex items-center">
+                                                    <input type="radio" name="period-type" value="single" class="mr-2" checked>
+                                                    <span>单期间</span>
+                                                </label>
+                                                <label class="flex items-center">
+                                                    <input type="radio" name="period-type" value="range" class="mr-2">
+                                                    <span>期间区间</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                        <div id="single-period-container">
+                                            <label for="single-period" class="block text-sm font-medium text-dark mb-1">单期间 <span class="text-danger">*</span></label>
+                                            <input type="month" id="single-period" class="w-full px-4 py-2 border border-gray-300 rounded-md" required>
+                                        </div>
+                                        <div id="range-period-container" class="hidden">
+                                            <label for="range-period-start" class="block text-sm font-medium text-dark mb-1">开始期间 <span class="text-danger">*</span></label>
+                                            <input type="month" id="range-period-start" class="w-full px-4 py-2 border border-gray-300 rounded-md">
+                                        </div>
+                                        <div id="range-period-end-container" class="hidden md:col-span-2">
+                                            <label for="range-period-end" class="block text-sm font-medium text-dark mb-1">结束期间 <span class="text-danger">*</span></label>
+                                            <input type="month" id="range-period-end" class="w-full px-4 py-2 border border-gray-300 rounded-md">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="payment-unit" class="block text-sm font-medium text-dark mb-1">付款单位简称 <span class="text-danger">*</span></label>
+                                        <select id="payment-unit" class="w-full px-4 py-2 border border-gray-300 rounded-md" required>
+                                            <option value="">请选择付款单位</option>
+                                        </select>
+                                    </div>
+                                    <div id="other-payment-unit-container" class="hidden">
+                                        <label for="other-payment-unit" class="block text-sm font-medium text-dark mb-1">其他付款单位</label>
+                                        <input type="text" id="other-payment-unit" class="w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="请输入其他付款单位">
+                                    </div>
+                                </div>
+
+                                <!-- 计量单位、数量、金额 -->
+                                <div id="measurement-container" class="mt-6">
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <label for="unit" class="block text-sm font-medium text-dark mb-1">计量单位 <span class="text-danger">*</span></label>
+                                            <select id="unit" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300" required>
+                                                <option value="">请选择计量单位</option>
+                                            </select>
+                                        </div>
+                                        <div id="other-unit-container" class="hidden">
+                                            <label for="other-unit" class="block text-sm font-medium text-dark mb-1">其他计量单位</label>
+                                            <input type="text" id="other-unit" class="w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="请输入其他计量单位">
+                                        </div>
+                                        <div>
+                                            <label for="quantity" class="block text-sm font-medium text-dark mb-1">数量</label>
+                                            <input type="number" id="quantity" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300" min="0" step="0.01">
+                                        </div>
+                                        <div>
+                                            <label for="amount" class="block text-sm font-medium text-dark mb-1">金额</label>
+                                            <input type="number" id="amount" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300" min="0" step="0.01">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 添加内容按钮 -->
+                                <div class="mt-4">
+                                    <button type="button" id="add-content-btn" class="text-primary hover:text-secondary transition-all-300 flex items-center gap-1">
+                                        <i class="fa fa-plus-circle"></i> 添加内容
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 提交和重置按钮 -->
+                            <div class="flex justify-end gap-4 pt-4 border-t border-gray-200">
+                                <button type="reset" class="px-6 py-2 border border-gray-300 rounded-md text-dark hover:bg-gray-50 transition-all-300 flex items-center gap-2">
+                                    <i class="fa fa-refresh"></i> 重置
+                                </button>
+                                <button type="submit" id="submit-file-btn" class="px-6 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-all-300 flex items-center gap-2">
+                                    <i class="fa fa-check-circle"></i> 提交文件
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- 文件信息页面 -->
+                    <div id="file-info-page" class="page-content hidden">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                            <h2 class="text-xl font-bold text-dark">文件信息</h2>
+                            <div class="flex gap-4">
+                                <div class="relative">
+                                    <input type="text" id="file-info-search" class="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300" placeholder="搜索文件信息...">
+                                    <i class="fa fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-info"></i>
+                                </div>
+                                <button id="file-info-refresh" class="px-4 py-2 border border-gray-300 rounded-md text-dark hover:bg-gray-50 transition-all-300 flex items-center gap-2">
+                                    <i class="fa fa-refresh"></i> 刷新
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 筛选条件 -->
+                        <div id="file-info-filters" class="mb-6 bg-light p-4 rounded-md">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div>
+                                    <label for="filter-date-start" class="block text-sm font-medium text-dark mb-1">开始日期</label>
+                                    <input type="date" id="filter-date-start" class="w-full px-4 py-2 border border-gray-300 rounded-md">
+                                </div>
+                                <div>
+                                    <label for="filter-date-end" class="block text-sm font-medium text-dark mb-1">结束日期</label>
+                                    <input type="date" id="filter-date-end" class="w-full px-4 py-2 border border-gray-300 rounded-md">
+                                </div>
+                                <div>
+                                    <label for="filter-file-type" class="block text-sm font-medium text-dark mb-1">文件类型</label>
+                                    <select id="filter-file-type" class="w-full px-4 py-2 border border-gray-300 rounded-md">
+                                        <option value="">全部</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="filter-department" class="block text-sm font-medium text-dark mb-1">部门</label>
+                                    <select id="filter-department" class="w-full px-4 py-2 border border-gray-300 rounded-md">
+                                        <option value="">全部</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="filter-status" class="block text-sm font-medium text-dark mb-1">送签状态</label>
+                                    <select id="filter-status" class="w-full px-4 py-2 border border-gray-300 rounded-md">
+                                        <option value="">全部</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex justify-end gap-2">
+                                <button id="reset-filters-btn" class="px-4 py-2 border border-gray-300 rounded-md text-dark hover:bg-gray-50 transition-all-300">重置筛选</button>
+                                <button id="apply-filters-btn" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-all-300">应用筛选</button>
+                            </div>
+                        </div>
+
+                        <!-- 文件信息表格 -->
+                        <div class="overflow-x-auto">
+                            <table id="file-info-table" class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">日期</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">文件类型</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">文件编号</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">申请部门</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">申请人</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">文件内容</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">计量单位</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">数量</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">金额</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">结束日期</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">送签状态</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">状态更新时间</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">退回原因</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="file-info-body" class="bg-white divide-y divide-gray-200">
+                                    <!-- 表格内容将通过JavaScript动态生成 -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- 分页 -->
+                        <div id="file-info-pagination" class="mt-6 flex justify-between items-center">
+                            <div class="text-sm text-info">显示 <span id="current-range">0-0</span> 共 <span id="total-records">0</span> 条记录</div>
+                            <div class="flex gap-2">
+                                <button id="prev-page" class="px-3 py-1 border border-gray-300 rounded-md text-dark hover:bg-gray-50 transition-all-300" disabled>
+                                    <i class="fa fa-chevron-left"></i>
+                                </button>
+                                <span id="page-info" class="px-3 py-1 text-sm text-dark">第 <span id="current-page">1</span> 页，共 <span id="total-pages">1</span> 页</span>
+                                <button id="next-page" class="px-3 py-1 border border-gray-300 rounded-md text-dark hover:bg-gray-50 transition-all-300" disabled>
+                                    <i class="fa fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 文件处理页面 -->
+                    <div id="file-process-page" class="page-content hidden">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                            <h2 class="text-xl font-bold text-dark">文件处理</h2>
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <button id="export-excel-btn" class="px-4 py-2 border border-gray-300 rounded-md text-dark hover:bg-gray-50 transition-all-300 flex items-center gap-2">
+                                    <i class="fa fa-download"></i> 导出Excel
+                                </button>
+                                <button id="file-process-refresh" class="px-4 py-2 border border-gray-300 rounded-md text-dark hover:bg-gray-50 transition-all-300 flex items-center gap-2">
+                                    <i class="fa fa-refresh"></i> 刷新
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 批量操作 -->
+                        <div id="batch-operations" class="mb-6 bg-light p-4 rounded-md">
+                            <div class="flex flex-col sm:flex-row gap-4">
+                                <div class="flex items-center gap-4">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" id="select-all" class="mr-2">
+                                        <span>全选</span>
+                                    </label>
+                                    <span id="selected-count" class="text-sm text-info">已选择 0 项</span>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button id="batch-update-status-btn" class="px-4 py-2 border border-gray-300 rounded-md text-dark hover:bg-gray-50 transition-all-300" disabled>
+                                        批量更新状态
+                                    </button>
+                                    <button id="batch-delete-btn" class="px-4 py-2 border border-danger text-danger hover:bg-danger/5 transition-all-300" disabled>
+                                        批量删除
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 文件处理表格 -->
+                        <div class="overflow-x-auto">
+                            <table id="file-process-table" class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">
+                                            <input type="checkbox" id="select-all-process" class="mr-2">
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">日期</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">文件类型</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">文件编号</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">申请部门</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">申请人</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">文件内容</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">计量单位</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">数量</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">金额</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">结束日期</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">送签状态</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="file-process-body" class="bg-white divide-y divide-gray-200">
+                                    <!-- 表格内容将通过JavaScript动态生成 -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- 分页 -->
+                        <div id="file-process-pagination" class="mt-6 flex justify-between items-center">
+                            <div class="text-sm text-info">显示 <span id="process-current-range">0-0</span> 共 <span id="process-total-records">0</span> 条记录</div>
+                            <div class="flex gap-2">
+                                <button id="process-prev-page" class="px-3 py-1 border border-gray-300 rounded-md text-dark hover:bg-gray-50 transition-all-300" disabled>
+                                    <i class="fa fa-chevron-left"></i>
+                                </button>
+                                <span id="process-page-info" class="px-3 py-1 text-sm text-dark">第 <span id="process-current-page">1</span> 页，共 <span id="process-total-pages">1</span> 页</span>
+                                <button id="process-next-page" class="px-3 py-1 border border-gray-300 rounded-md text-dark hover:bg-gray-50 transition-all-300" disabled>
+                                    <i class="fa fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 系统设置页面 -->
+                    <div id="system-settings-page" class="page-content hidden">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-bold text-dark">系统设置</h2>
+                        </div>
+
+                        <!-- 初始设置部分 -->
+                        <div class="mb-8">
+                            <h3 class="text-lg font-semibold text-dark mb-4">初始设置</h3>
+                            
+                            <!-- 文件类型设置 -->
+                            <div class="mb-6 bg-light p-4 rounded-md">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h4 class="font-medium text-dark">文件类型</h4>
+                                    <button class="add-item-btn px-3 py-1 bg-primary text-white rounded-md hover:bg-primary/90 transition-all-300 text-sm" data-type="fileTypes">
+                                        添加文件类型
+                                    </button>
+                                </div>
+                                <div id="file-types-container" class="space-y-2">
+                                    <!-- 文件类型列表将通过JavaScript动态生成 -->
+                                </div>
+                            </div>
+
+                            <!-- 部门设置 -->
+                            <div class="mb-6 bg-light p-4 rounded-md">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h4 class="font-medium text-dark">申请部门</h4>
+                                    <button class="add-item-btn px-3 py-1 bg-primary text-white rounded-md hover:bg-primary/90 transition-all-300 text-sm" data-type="departments">
+                                        添加部门
+                                    </button>
+                                </div>
+                                <div id="departments-container" class="space-y-2">
+                                    <!-- 部门列表将通过JavaScript动态生成 -->
+                                </div>
+                            </div>
+
+                            <!-- 计量单位设置 -->
+                            <div class="mb-6 bg-light p-4 rounded-md">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h4 class="font-medium text-dark">计量单位</h4>
+                                    <button class="add-item-btn px-3 py-1 bg-primary text-white rounded-md hover:bg-primary/90 transition-all-300 text-sm" data-type="units">
+                                        添加计量单位
+                                    </button>
+                                </div>
+                                <div id="units-container" class="space-y-2">
+                                    <!-- 计量单位列表将通过JavaScript动态生成 -->
+                                </div>
+                            </div>
+
+                            <!-- 送签状态设置 -->
+                            <div class="mb-6 bg-light p-4 rounded-md">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h4 class="font-medium text-dark">送签状态</h4>
+                                    <button class="add-item-btn px-3 py-1 bg-primary text-white rounded-md hover:bg-primary/90 transition-all-300 text-sm" data-type="statuses">
+                                        添加送签状态
+                                    </button>
+                                </div>
+                                <div id="statuses-container" class="space-y-2">
+                                    <!-- 送签状态列表将通过JavaScript动态生成 -->
+                                </div>
+                            </div>
+
+                            <!-- 付款单位设置 -->
+                            <div class="mb-6 bg-light p-4 rounded-md">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h4 class="font-medium text-dark">付款单位简称</h4>
+                                    <button class="add-item-btn px-3 py-1 bg-primary text-white rounded-md hover:bg-primary/90 transition-all-300 text-sm" data-type="paymentUnits">
+                                        添加付款单位
+                                    </button>
+                                </div>
+                                <div id="payment-units-container" class="space-y-2">
+                                    <!-- 付款单位列表将通过JavaScript动态生成 -->
+                                </div>
+                            </div>
+
+                            <!-- 支付类型设置 -->
+                            <div class="mb-6 bg-light p-4 rounded-md">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h4 class="font-medium text-dark">支付类型</h4>
+                                    <button class="add-item-btn px-3 py-1 bg-primary text-white rounded-md hover:bg-primary/90 transition-all-300 text-sm" data-type="paymentCategories">
+                                        添加支付类型
+                                    </button>
+                                </div>
+                                <div id="payment-categories-container" class="space-y-2">
+                                    <!-- 支付类型列表将通过JavaScript动态生成 -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 账号管理部分 -->
+                        <div class="mb-8">
+                            <h3 class="text-lg font-semibold text-dark mb-4">账号管理</h3>
+                            
+                            <!-- 账号列表 -->
+                            <div class="mb-6">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h4 class="font-medium text-dark">账号列表</h4>
+                                    <button id="add-account-btn" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-all-300">
+                                        添加账号
+                                    </button>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table id="accounts-table" class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">账号</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">密码</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">权限</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="accounts-body" class="bg-white divide-y divide-gray-200">
+                                            <!-- 账号列表将通过JavaScript动态生成 -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 操作日志部分 -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-dark mb-4">操作日志</h3>
+                            
+                            <div class="overflow-x-auto">
+                                <table id="logs-table" class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">操作时间</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">操作账号</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-info uppercase tracking-wider">操作内容</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="logs-body" class="bg-white divide-y divide-gray-200">
+                                        <!-- 操作日志将通过JavaScript动态生成 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 编辑文件弹窗 -->
+    <div id="edit-file-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6 bg-white rounded-lg shadow-custom">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-semibold text-dark">编辑文件信息</h2>
+                <button id="close-edit-modal-btn" class="text-info hover:text-dark transition-all-300">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <form id="edit-file-form" class="space-y-4">
+                <input type="hidden" id="edit-file-id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="edit-date" class="block text-sm font-medium text-dark mb-1">日期 <span class="text-danger">*</span></label>
+                        <input type="date" id="edit-date" class="w-full px-4 py-2 border border-gray-300 rounded-md" required>
+                    </div>
+                    <div>
+                        <label for="edit-file-type" class="block text-sm font-medium text-dark mb-1">文件类型 <span class="text-danger">*</span></label>
+                        <select id="edit-file-type" class="w-full px-4 py-2 border border-gray-300 rounded-md" required>
+                            <option value="">请选择文件类型</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="edit-file-number" class="block text-sm font-medium text-dark mb-1">文件编号</label>
+                        <input type="text" id="edit-file-number" class="w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="请输入文件编号">
+                    </div>
+                    <div>
+                        <label for="edit-department" class="block text-sm font-medium text-dark mb-1">部门 <span class="text-danger">*</span></label>
+                        <select id="edit-department" class="w-full px-4 py-2 border border-gray-300 rounded-md" required>
+                            <option value="">请选择部门</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="edit-applicant" class="block text-sm font-medium text-dark mb-1">申请人 <span class="text-danger">*</span></label>
+                        <input type="text" id="edit-applicant" class="w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="请输入申请人姓名" required>
+                    </div>
+                    <div>
+                        <label for="edit-status" class="block text-sm font-medium text-dark mb-1">送签状态</label>
+                        <select id="edit-status" class="w-full px-4 py-2 border border-gray-300 rounded-md">
+                            <option value="">请选择送签状态</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="edit-file-content" class="block text-sm font-medium text-dark mb-1">文件内容 <span class="text-danger">*</span></label>
+                        <textarea id="edit-file-content" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="请输入文件内容" required></textarea>
+                    </div>
+                    <div>
+                        <label for="edit-unit" class="block text-sm font-medium text-dark mb-1">计量单位 <span class="text-danger">*</span></label>
+                        <select id="edit-unit" class="w-full px-4 py-2 border border-gray-300 rounded-md" required>
+                            <option value="">请选择计量单位</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="edit-quantity" class="block text-sm font-medium text-dark mb-1">数量</label>
+                        <input type="number" id="edit-quantity" class="w-full px-4 py-2 border border-gray-300 rounded-md" min="0" step="0.01">
+                    </div>
+                    <div>
+                        <label for="edit-amount" class="block text-sm font-medium text-dark mb-1">金额</label>
+                        <input type="number" id="edit-amount" class="w-full px-4 py-2 border border-gray-300 rounded-md" min="0" step="0.01">
+                    </div>
+                    <div id="edit-reject-reason-container" class="hidden">
+                        <label for="edit-reject-reason" class="block text-sm font-medium text-dark mb-1">退回原因</label>
+                        <textarea id="edit-reject-reason" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="请输入退回原因"></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" id="cancel-edit-btn" class="px-4 py-2 border border-gray-300 rounded-md text-dark hover:bg-gray-50 transition-all-300">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-all-300">保存修改</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 添加账号弹窗 -->
+    <div id="add-account-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="w-full max-w-md p-6 bg-white rounded-lg shadow-custom">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-semibold text-dark">添加账号</h2>
+                <button id="close-add-account-modal-btn" class="text-info hover:text-dark transition-all-300">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <form id="add-account-form" class="space-y-4">
+                <div>
+                    <label for="new-username" class="block text-sm font-medium text-dark mb-1">账号 <span class="text-danger">*</span></label>
+                    <input type="text" id="new-username" class="w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="请输入账号" required>
+                </div>
+                <div>
+                    <label for="new-password" class="block text-sm font-medium text-dark mb-1">密码 <span class="text-danger">*</span></label>
+                    <input type="password" id="new-password" class="w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="请输入密码" required>
+                </div>
+                <div>
+                    <label for="new-role" class="block text-sm font-medium text-dark mb-1">权限 <span class="text-danger">*</span></label>
+                    <select id="new-role" class="w-full px-4 py-2 border border-gray-300 rounded-md" required>
+                        <option value="admin">总管理员</option>
+                        <option value="manager">普通管理员</option>
+                        <option value="user">普通账号</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" id="cancel-add-account-btn" class="px-4 py-2 border border-gray-300 rounded-md text-dark hover:bg-gray-50 transition-all-300">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-all-300">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 批量更新状态弹窗 -->
+    <div id="batch-status-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="w-full max-w-md p-6 bg-white rounded-lg shadow-custom">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-semibold text-dark">批量更新状态</h2>
+                <button id="close-batch-status-modal-btn" class="text-info hover:text-dark transition-all-300">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <form id="batch-status-form" class="space-y-4">
+                <input type="hidden" id="selected-file-ids">
+                <div>
+                    <label for="batch-status" class="block text-sm font-medium text-dark mb-1">送签状态 <span class="text-danger">*</span></label>
+                    <select id="batch-status" class="w-full px-4 py-2 border border-gray-300 rounded-md" required>
+                        <option value="">请选择送签状态</option>
+                    </select>
+                </div>
+                <div id="batch-reject-reason-container" class="hidden">
+                    <label for="batch-reject-reason" class="block text-sm font-medium text-dark mb-1">退回原因</label>
+                    <textarea id="batch-reject-reason" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-md" placeholder="请输入退回原因"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" id="cancel-batch-status-btn" class="px-4 py-2 border border-gray-300 rounded-md text-dark hover:bg-gray-50 transition-all-300">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-all-300">确认更新</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 确认弹窗 -->
+    <div id="confirm-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="w-full max-w-md p-6 bg-white rounded-lg shadow-custom">
+            <div class="text-center mb-4">
+                <h2 class="text-lg font-semibold text-dark">确认操作</h2>
+                <p id="confirm-message" class="text-info mt-2">您确定要执行此操作吗？</p>
+            </div>
+            <div class="flex justify-center gap-4 pt-2">
+                <button id="cancel-confirm-btn" class="px-6 py-2 border border-gray-300 rounded-md text-dark hover:bg-gray-50 transition-all-300">取消</button>
+                <button id="confirm-action-btn" class="px-6 py-2 bg-danger text-white rounded-md hover:bg-danger/90 transition-all-300">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 成功提示 -->
+    <div id="success-toast" class="fixed top-4 right-4 bg-success text-white px-4 py-3 rounded-md shadow-custom flex items-center gap-2 transform translate-x-full transition-transform duration-300">
+        <i class="fa fa-check-circle"></i>
+        <span id="success-message">操作成功</span>
+    </div>
+
+    <!-- 错误提示 -->
+    <div id="error-toast" class="fixed top-4 right-4 bg-danger text-white px-4 py-3 rounded-md shadow-custom flex items-center gap-2 transform translate-x-full transition-transform duration-300">
+        <i class="fa fa-exclamation-circle"></i>
+        <span id="error-message">操作失败</span>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/file-register.js"></script>
+    <script src="js/file-info.js"></script>
+    <script src="js/file-process.js"></script>
+    <script src="js/system-settings.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
